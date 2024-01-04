@@ -1,55 +1,58 @@
 #include <windows.h>
+        #include "tchar.h"
 
-HHOOK hHook = NULL;
-
-const TCHAR* OKTEXT =TEXT("YEEAAAHHH!");
-const TCHAR* CANCELTEXT = TEXT("NOOOOO!") ;
+const TCHAR *OK_TEXT = TEXT("YEEAAAHHH!");
+const TCHAR *CANCEL_TEXT = TEXT("NOOOOO!");
 
 BOOL CALLBACK MessageBoxEnumProc(HWND hwnd, LPARAM lParam)
 {
-    TCHAR className[256]; // = {0};
+    TCHAR className[256];
     GetClassName(hwnd, className, 256);
     if (lstrcmp(className, TEXT("Button")) == 0)
     {
-        // TCHAR text[256];
-        // GetWindowText(hwnd,text,256); //contains OK!
+        //TCHAR text[256];
+        int textLength = GetWindowTextLength(hwnd);
+        TCHAR* text = malloc((textLength+1) * sizeof(TCHAR));
+        GetWindowText(hwnd,text,textLength+1);
+        _tprintf("'%s'\n",text);
+        if(lstrcmp(text,TEXT("OK"))==0) _tprintf(TEXT("FOUND OK!"));
+        free(text);
+
 
         int ctlId = GetDlgCtrlID(hwnd);
         switch (ctlId)
         {
         case IDOK:
-            SetWindowText(hwnd, OKTEXT );
+            SetWindowText(hwnd, OK_TEXT);
             break;
         case IDCANCEL:
-            SetWindowText(hwnd, CANCELTEXT);
+            SetWindowText(hwnd, CANCEL_TEXT);
             break;
         }
     }
     return TRUE;
 }
 
-LRESULT CALLBACK MyMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     CWPSTRUCT *msg = (CWPSTRUCT *)lParam;
-
     if (msg->message == WM_INITDIALOG)
     {
         HWND hwnd = msg->hwnd;
         TCHAR className[256];
         GetClassName(hwnd, className, 256);
 
-        //https://learn.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
+        // https://learn.microsoft.com/en-us/windows/win32/winmsg/about-window-classes
         if (lstrcmp(className, TEXT("#32770")) == 0)
-            EnumChildWindows(hwnd,MessageBoxEnumProc, lParam);
+            EnumChildWindows(hwnd, MessageBoxEnumProc, 0);
     }
 
-    // Call the next hook in the chain
     return CallNextHookEx(NULL, nCode, wParam, lParam);
 }
 
 int main()
 {
-    hHook = SetWindowsHookEx(WH_CALLWNDPROC, MyMsgProc, NULL, GetCurrentThreadId());
+    HHOOK hHook = SetWindowsHookEx(WH_CALLWNDPROC, HookProc, NULL, GetCurrentThreadId());
 
     MessageBox(NULL, "The quantum realm has finally come to an end!", "KEFTEDAKIAS", MB_ICONWARNING | MB_OKCANCEL);
 
