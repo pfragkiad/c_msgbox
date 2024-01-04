@@ -1,12 +1,12 @@
 #include <windows.h>
-//#include "tchar.h"
+#include "tchar.h" //_trintf
 
 const TCHAR *OK_TEXT = TEXT("YEEAAAHHH!");
 const TCHAR *CANCEL_TEXT = TEXT("NOOOOO!");
 
-BOOL areStringsEqual(TCHAR *str1, TCHAR *str2)
+BOOL areStringsEqual(TCHAR *str1, TCHAR *str2, BOOL caseSensitive)
 {
-    return lstrcmp(str1, str2) == 0;
+    return caseSensitive ? lstrcmp(str1, str2) == 0 : lstrcmpi(str1, str2) == 0;
 }
 
 BOOL isWindowText(HWND hwnd, TCHAR *str)
@@ -15,7 +15,7 @@ BOOL isWindowText(HWND hwnd, TCHAR *str)
     TCHAR *text = malloc((textLength + 1) * sizeof(TCHAR));
     GetWindowText(hwnd, text, textLength + 1);
     // int length2 = lstrlen(text); //2
-    _tprintf("'%s'\n", text);
+    //_tprintf("'%s'\n", text);
     int result = lstrcmp(text, TEXT("OK")) == 0;
     free(text);
     return result == 0;
